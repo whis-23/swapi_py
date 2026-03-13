@@ -267,6 +267,51 @@ docker build -t swapi-py .
 docker run -p 8080:8080 swapi-py
 ```
 
+### Kubernetes Deployment
+
+The application is prepared for deployment on a Kubernetes cluster with built-in scalability and persistent storage.
+
+#### Prerequisites
+- A running Kubernetes cluster (Minikube, EKS, GKE, etc.)
+- `kubectl` configured to communicate with the cluster.
+
+#### Deployment Steps
+1. **Apply Manifests:**
+   ```bash
+   # Deploy storage first
+   kubectl apply -f k8s/storage.yaml
+   
+   # Deploy database
+   kubectl apply -f k8s/database.yaml
+   
+   # Deploy Backend & Frontend
+   kubectl apply -f k8s/backend.yaml
+   kubectl apply -f k8s/frontend.yaml
+   ```
+
+2. **Verify Deployment:**
+   ```bash
+   kubectl get pods
+   kubectl get services
+   ```
+
+#### Persistent Storage
+The database uses a `PersistentVolume` and `PersistentVolumeClaim` (defined in `k8s/storage.yaml`) to ensure data persists even if the pod is restarted or moved.
+
+#### Scaling
+Horizontal Pod Autoscaler (HPA) is configured for the backend service (defined in `k8s/hpa.yaml`).
+- **Minimum Replicas:** 2
+- **Maximum Replicas:** 5
+- **CPU Target:** 70%
+
+**Apply Scaling:**
+```bash
+kubectl apply -f k8s/hpa.yaml
+```
+
+**Verify Scaling:**
+A verification script is provided in `scripts/verify_scaling.sh` to simulate load and monitor pod scaling.
+
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string
 - `JWT_SECRET_KEY`: JWT signing key
