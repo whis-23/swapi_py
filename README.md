@@ -241,31 +241,44 @@ Represents ground and atmospheric vehicles.
 - Docker containerization support
 - Database migrations with Liquibase
 
-## Deployment
+## Containerization and Deployment
 
-### Development
+### Docker Setup
+
+The application is containerized using optimized multi-stage builds for both backend and frontend services.
+
+#### Backend (Flask)
+The backend uses `Dockerfile.backend` based on `python:3.10-slim`.
 ```bash
-# Backend
-poetry install
-poetry run python src/main/python/Swapi_pyApp.py
-
-# Frontend
-npm install
-npm start
-
-# Full stack
-npm run pyhipster
+docker build -t swapi-backend -f Dockerfile.backend .
 ```
 
-### Production
+#### Frontend (Angular)
+The frontend uses `Dockerfile.frontend` which builds the Angular app with Node 16 and serves it with Nginx.
 ```bash
-# Build frontend
-npm run webapp:build:prod
-
-# Docker deployment
-docker build -t swapi-py .
-docker run -p 8080:8080 swapi-py
+docker build -t swapi-frontend -f Dockerfile.frontend .
 ```
+
+### Docker Compose
+
+For local development and orchestration of multiple services (Backend, Frontend, and Database), use Docker Compose.
+
+**Services:**
+- `db`: PostgreSQL 14 Database
+- `backend`: Flask API Service
+- `frontend`: Angular Web Interface
+
+**Running the Stack:**
+```bash
+# Start all services in the background
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+```
+
+**Configuration:**
+The compose file handles networking, health checks, and service dependencies to ensure the backend starts only after the database is ready.
 
 ### Environment Variables
 - `DATABASE_URL`: PostgreSQL connection string
