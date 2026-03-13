@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swapi-frontend
+  labels:
+    app: swapi
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: swapi
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: swapi
+        tier: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: whis-19/swapi-frontend:latest
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "64Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swapi-frontend-service
+spec:
+  selector:
+    app: swapi
+    tier: frontend
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
