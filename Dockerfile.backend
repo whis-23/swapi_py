@@ -1,0 +1,36 @@
+# Use official Python runtime as a parent image
+FROM python:3.10-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=src/main/python/Swapi_pyApp.py
+ENV PYTHONPATH=/app/src/main/python
+
+# Set work directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install poetry
+RUN pip install --no-cache-dir poetry
+
+# Copy only requirements to cache them in docker layer
+COPY pyproject.toml poetry.lock* /app/
+
+# Project initialization:
+RUN poetry config virtualenvs.create false \
+  && poetry install --no-interaction --no-ansi --no-root
+
+# Copy project
+COPY . /app/
+
+# Expose port
+EXPOSE 8081
+
+# Run the app
+CMD ["python", "src/main/python/Swapi_pyApp.py"]
