@@ -243,6 +243,8 @@ Represents ground and atmospheric vehicles.
 
 ## Containerization and Deployment
 
+![DevOps Methodology Flowchart](swapi_devops.png)
+
 ### Docker Setup
 
 The application is containerized using optimized multi-stage builds for both backend and frontend services.
