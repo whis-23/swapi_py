@@ -1,0 +1,109 @@
+// Manual Rollback Pipeline — flips the ALB listener back to the other color.
+// Run this if a problem is detected after a blue-green switch.
+
+pipeline {
+    agent { label 'linux-agent' }
+
+    environment {
+        AWS_REGION = 'us-east-1'
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 15, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+        stage('Determine Current Live Color') {
+            steps {
+                script {
+                    env.ALB_ARN = sh(
+                        script: """aws elbv2 describe-load-balancers \
+                            --query "LoadBalancers[?contains(LoadBalancerName,'swapi')].LoadBalancerArn" \
+                            --output text --region ${env.AWS_REGION}""",
+                        returnStdout: true
+                    ).trim()
+
+                    env.LISTENER_ARN = sh(
+                        script: """aws elbv2 describe-listeners \
+                            --load-balancer-arn ${env.ALB_ARN} \
+                            --query "Listeners[?Port==\`80\`].ListenerArn" \
+                            --output text --region ${env.AWS_REGION}""",
+                        returnStdout: true
+                    ).trim()
+
+                    env.TG_BLUE_ARN = sh(
+                        script: """aws elbv2 describe-target-groups \
+                            --names tg-blue \
+                            --query "TargetGroups[0].TargetGroupArn" \
+                            --output text --region ${env.AWS_REGION}""",
+                        returnStdout: true
+                    ).trim()
+
+                    env.TG_GREEN_ARN = sh(
+                        script: """aws elbv2 describe-target-groups \
+                            --names tg-green \
+                            --query "TargetGroups[0].TargetGroupArn" \
+                            --output text --region ${env.AWS_REGION}""",
+                        returnStdout: true
+                    ).trim()
+
+                    env.LIVE_TG_ARN = sh(
+                        script: """aws elbv2 describe-rules \
+                            --listener-arn ${env.LISTENER_ARN} \
+                            --query "Rules[?IsDefault==\`true\`].Actions[0].TargetGroupArn" \
+                            --output text --region ${env.AWS_REGION}""",
+                        returnStdout: true
+                    ).trim()
+
+                    if (env.LIVE_TG_ARN == env.TG_BLUE_ARN) {
+                        env.ROLLBACK_TG_ARN = env.TG_GREEN_ARN
+                        env.LIVE_COLOR      = 'blue'
+                        env.ROLLBACK_COLOR  = 'green'
+                    } else {
+                        env.ROLLBACK_TG_ARN = env.TG_BLUE_ARN
+                        env.LIVE_COLOR      = 'green'
+                        env.ROLLBACK_COLOR  = 'blue'
+                    }
+
+                    echo "Current live: ${env.LIVE_COLOR} | Rolling back to: ${env.ROLLBACK_COLOR}"
+                }
+            }
+        }
+
+        stage('Flip ALB Listener') {
+            steps {
+                sh """
+                    aws elbv2 modify-listener \
+                        --listener-arn ${env.LISTENER_ARN} \
+                        --default-actions "Type=forward,TargetGroupArn=${env.ROLLBACK_TG_ARN}" \
+                        --region ${env.AWS_REGION}
+                    echo "Rollback complete: traffic is now on ${env.ROLLBACK_COLOR}."
+                """
+            }
+        }
+
+        stage('Log Rollback to S3') {
+            steps {
+                sh """
+                    LOG_ENTRY='{"timestamp":"'"\$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","sha":"rollback","image":"N/A","from":"${env.LIVE_COLOR}","to":"${env.ROLLBACK_COLOR}","result":"rolled-back"}'
+                    EXISTING=\$(aws s3 cp s3://swapi-terraform-state-d76255a5/deploy-log.jsonl - --region ${env.AWS_REGION} 2>/dev/null || echo "")
+                    printf "%s\\n%s\\n" "\$EXISTING" "\$LOG_ENTRY" | \
+                        aws s3 cp - s3://swapi-terraform-state-d76255a5/deploy-log.jsonl \
+                        --content-type text/plain --region ${env.AWS_REGION}
+                    echo "Rollback logged to S3."
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Rollback to ${env.ROLLBACK_COLOR} succeeded. Monitor the ALB to confirm."
+        }
+        failure {
+            echo "Rollback FAILED. Investigate immediately — traffic state is unknown."
+        }
+    }
+}

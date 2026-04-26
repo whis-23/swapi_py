@@ -1,0 +1,10 @@
+# Values from Assignment 3 infrastructure
+region              = "us-east-1"
+environment         = "dev"
+ami_id              = "ami-0c7217cdde317cfec"
+instance_type       = "t3.micro"
+key_name            = "assignment3-key"
+my_ip               = "121.52.152.39/32"
+alb_sg_id           = "sg-06f6039ac07e7328c"
+web_sg_id           = "sg-0ec37c42df357d4f2"
+jenkins_agent_sg_id = "sg-0ec37c42df357d4f2"

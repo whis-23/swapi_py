@@ -1,0 +1,122 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Jenkins Installation \& Basic Configuration}{3}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Overview}{3}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}Infrastructure Architecture}{3}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.3}S3 Remote State Backend}{3}{subsection.1.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces S3 bucket \texttt  {swapi-terraform-state-d76255a5} used as Terraform remote state backend.}}{3}{figure.caption.1}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:s3-overview}{{1}{3}{S3 bucket \texttt {swapi-terraform-state-d76255a5} used as Terraform remote state backend}{figure.caption.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Contents of the S3 remote state bucket showing Terraform state files for Assignment 3 and Jenkins.}}{4}{figure.caption.2}\protected@file@percent }
+\newlabel{fig:s3-contents}{{2}{4}{Contents of the S3 remote state bucket showing Terraform state files for Assignment 3 and Jenkins}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.4}DynamoDB State Locking}{4}{subsection.1.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces DynamoDB table \texttt  {terraform-locks} used to prevent concurrent Terraform applies.}}{4}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:dynamo-table}{{3}{4}{DynamoDB table \texttt {terraform-locks} used to prevent concurrent Terraform applies}{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces DynamoDB table items view (empty when no Terraform apply is in progress).}}{5}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:dynamo-items}{{4}{5}{DynamoDB table items view (empty when no Terraform apply is in progress)}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.5}VPC and Networking}{5}{subsection.1.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces VPC \texttt  {dev-vpc} (\texttt  {vpc-08c9c55f9436fa78f}) used by all Assignment 4 resources.}}{5}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:vpc-list}{{5}{5}{VPC \texttt {dev-vpc} (\texttt {vpc-08c9c55f9436fa78f}) used by all Assignment 4 resources}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces The four subnets: two public (for the controller and ALB) and two private (for the agent and backend).}}{6}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:vpc-subnets}{{6}{6}{The four subnets: two public (for the controller and ALB) and two private (for the agent and backend)}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.6}EC2 Instances}{6}{subsection.1.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces EC2 Instances dashboard showing all running instances including the Assignment 3 web server.}}{6}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:ec2-all}{{7}{6}{EC2 Instances dashboard showing all running instances including the Assignment 3 web server}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.7}Security Groups}{7}{subsection.1.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Security groups provisioned: \texttt  {dev-web-sg}, \texttt  {dev-alb-sg}, and \texttt  {dev-db-sg} from Assignment 3 (Jenkins SGs created after terraform apply).}}{7}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:ec2-sgs}{{8}{7}{Security groups provisioned: \texttt {dev-web-sg}, \texttt {dev-alb-sg}, and \texttt {dev-db-sg} from Assignment 3 (Jenkins SGs created after terraform apply)}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Inbound rules for \texttt  {dev-web-sg}: HTTP (80) from the ALB security group and SSH (22) from the admin IP.}}{7}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:sg-web}{{9}{7}{Inbound rules for \texttt {dev-web-sg}: HTTP (80) from the ALB security group and SSH (22) from the admin IP}{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Inbound rules for \texttt  {dev-alb-sg}: HTTP (80) open to the internet, with the Jenkins agent allowed on port 8080 for SonarQube webhook callbacks.}}{8}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:sg-alb}{{10}{8}{Inbound rules for \texttt {dev-alb-sg}: HTTP (80) open to the internet, with the Jenkins agent allowed on port 8080 for SonarQube webhook callbacks}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.8}Key Pair}{8}{subsection.1.8}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces EC2 Key Pair \texttt  {assignment3-key} used for SSH access to the Jenkins controller and agent.}}{8}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:ec2-keys}{{11}{8}{EC2 Key Pair \texttt {assignment3-key} used for SSH access to the Jenkins controller and agent}{figure.caption.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.9}Jenkins Credential Configuration}{8}{subsection.1.9}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Jenkins Credentials}}{9}{table.caption.12}\protected@file@percent }
+\newlabel{tab:jenkins-creds}{{1}{9}{Jenkins Credentials}{table.caption.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.10}Plugin List}{9}{subsection.1.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Declarative Pipeline with Parallel Stages \& Notifications}{10}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Overview}{10}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Pipeline Stages}{10}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Application Code}{10}{subsection.2.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces SWAPI Flask API Endpoints}}{10}{table.caption.13}\protected@file@percent }
+\newlabel{tab:endpoints}{{2}{10}{SWAPI Flask API Endpoints}{table.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Test Suite Summary}{11}{subsection.2.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Test Results Summary (all 38 tests passing)}}{11}{table.caption.14}\protected@file@percent }
+\newlabel{tab:tests}{{3}{11}{Test Results Summary (all 38 tests passing)}{table.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Pipeline Jenkinsfile (excerpt)}{11}{subsection.2.5}\protected@file@percent }
+\newlabel{lst:parallel}{{1}{11}{Parallel Test stage from assignment-4/Jenkinsfile}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces Parallel Test stage from assignment-4/Jenkinsfile}}{11}{lstlisting.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}Slack Notification (post block)}{11}{subsection.2.6}\protected@file@percent }
+\newlabel{lst:slack}{{2}{11}{Post-build Slack notifications using shared library}{lstlisting.2}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}{\ignorespaces Post-build Slack notifications using shared library}}{11}{lstlisting.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Groovy Shared Library}{13}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Overview}{13}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Library Structure}{13}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Key Global Variables}{13}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.1}notifySlack.groovy}{13}{subsubsection.3.3.1}\protected@file@percent }
+\newlabel{lst:notify}{{3}{13}{notifySlack global variable}{lstlisting.3}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {3}{\ignorespaces notifySlack global variable}}{13}{lstlisting.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.3.2}buildAndPushImage.groovy}{13}{subsubsection.3.3.2}\protected@file@percent }
+\newlabel{lst:dockerpush}{{4}{13}{buildAndPushImage global variable}{lstlisting.4}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {4}{\ignorespaces buildAndPushImage global variable}}{13}{lstlisting.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Library Registration in Jenkins}{14}{subsection.3.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Jenkins Shared Library Configuration}}{14}{table.caption.15}\protected@file@percent }
+\newlabel{tab:sharedlib}{{4}{14}{Jenkins Shared Library Configuration}{table.caption.15}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}SonarQube Integration}{15}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Overview}{15}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}SonarQube EC2 Infrastructure}{15}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}sonar-project.properties}{15}{subsection.4.3}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {5}{\ignorespaces sonar-project.properties}}{15}{lstlisting.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Quality Gate Configuration}{15}{subsection.4.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}SonarQube Webhook}{15}{subsection.4.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Docker Build, Trivy Scan, ECR Push}{16}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Overview}{16}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Multi-Stage Dockerfile}{16}{subsection.5.2}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {6}{\ignorespaces assignment-4/Dockerfile (multi-stage)}}{16}{lstlisting.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}ECR Repository}{17}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces ECR Repositories list. The \texttt  {swapi-app} repository is created by the \texttt  {ecr} Terraform module with a lifecycle policy that expires untagged images after 7 days and retains a maximum of 10 tagged images.}}{17}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:ecr-repos}{{12}{17}{ECR Repositories list. The \texttt {swapi-app} repository is created by the \texttt {ecr} Terraform module with a lifecycle policy that expires untagged images after 7 days and retains a maximum of 10 tagged images}{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Trivy Security Scan}{17}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}IAM Role for Agent (ECR Push Permissions)}{18}{subsection.5.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces IAM Roles list; after \texttt  {terraform apply} in \texttt  {assignment-4/jenkins/terraform/}, the \texttt  {dev-jenkins-agent-role} appears with ECR, S3, ALB, and EC2 permissions.}}{18}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:iam-roles}{{13}{18}{IAM Roles list; after \texttt {terraform apply} in \texttt {assignment-4/jenkins/terraform/}, the \texttt {dev-jenkins-agent-role} appears with ECR, S3, ALB, and EC2 permissions}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Terraform CI/CD Pipeline}{19}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Overview}{19}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Pipeline Parameters}{19}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Jenkinsfile.infra Pipeline Parameters}}{19}{table.caption.18}\protected@file@percent }
+\newlabel{tab:infra-params}{{5}{19}{Jenkinsfile.infra Pipeline Parameters}{table.caption.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Infra Pipeline Stages}{19}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}DynamoDB State Locking}{19}{subsection.6.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces DynamoDB \texttt  {terraform-locks} table; during an apply the lock entry appears, preventing concurrent state mutations.}}{20}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:dynamo-lock}{{14}{20}{DynamoDB \texttt {terraform-locks} table; during an apply the lock entry appears, preventing concurrent state mutations}{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}tfsec Security Report}{20}{subsection.6.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Blue-Green Deployment}{21}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Overview}{21}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Infrastructure Architecture}{21}{subsection.7.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Application Load Balancer \texttt  {dev-alb} provisioned by the \texttt  {blue-green} Terraform module.}}{21}{figure.caption.20}\protected@file@percent }
+\newlabel{fig:alb-list}{{15}{21}{Application Load Balancer \texttt {dev-alb} provisioned by the \texttt {blue-green} Terraform module}{figure.caption.20}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces ALB listeners: port 80 forwards to the \emph  {live} target group; port 8080 forwards to the \emph  {idle} target group for smoke testing before the switch.}}{21}{figure.caption.21}\protected@file@percent }
+\newlabel{fig:alb-listeners}{{16}{21}{ALB listeners: port 80 forwards to the \emph {live} target group; port 8080 forwards to the \emph {idle} target group for smoke testing before the switch}{figure.caption.21}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Target groups \texttt  {dev-tg-blue} and \texttt  {dev-tg-green} — each backed by a dedicated Auto Scaling Group.}}{22}{figure.caption.22}\protected@file@percent }
+\newlabel{fig:tg-list}{{17}{22}{Target groups \texttt {dev-tg-blue} and \texttt {dev-tg-green} — each backed by a dedicated Auto Scaling Group}{figure.caption.22}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Blue target group targets.}}{22}{figure.caption.23}\protected@file@percent }
+\newlabel{fig:tg-blue-targets}{{18}{22}{Blue target group targets}{figure.caption.23}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Green target group targets.}}{23}{figure.caption.24}\protected@file@percent }
+\newlabel{fig:tg-green-targets}{{19}{23}{Green target group targets}{figure.caption.24}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Auto Scaling Groups view showing \texttt  {dev-asg-blue} and \texttt  {dev-asg-green} (provisioned after terraform apply).}}{23}{figure.caption.25}\protected@file@percent }
+\newlabel{fig:asg-list}{{20}{23}{Auto Scaling Groups view showing \texttt {dev-asg-blue} and \texttt {dev-asg-green} (provisioned after terraform apply)}{figure.caption.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Blue-Green Deploy Script Logic}{23}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}Rollback Pipeline}{24}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}S3 Deploy Log Example}{24}{subsection.7.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}Architecture Diagram}{24}{subsection.7.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces End-to-end CI/CD architecture: Jenkins controller delegates to agent, which runs SonarQube scan, builds and pushes Docker image to ECR, and switches the ALB to the new blue/green target. Prometheus and Grafana monitor the controller and agent.}}{24}{figure.caption.26}\protected@file@percent }
+\newlabel{fig:arch}{{21}{24}{End-to-end CI/CD architecture: Jenkins controller delegates to agent, which runs SonarQube scan, builds and pushes Docker image to ECR, and switches the ALB to the new blue/green target. Prometheus and Grafana monitor the controller and agent}{figure.caption.26}{}}
+\@writefile{toc}{\contentsline {section}{Observability (Bonus)}{25}{figure.caption.26}\protected@file@percent }
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {7}{\ignorespaces assignment-4/observability/prometheus.yml}}{25}{lstlisting.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{Conclusion}{26}{lstnumber.7.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{26}{lstnumber.7.16}\protected@file@percent }
+\gdef \@abspage@last{27}

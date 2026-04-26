@@ -1,0 +1,32 @@
+# Jenkins plugins required for Assignment 4
+# Install via: jenkins-plugin-cli --plugin-file plugins.txt
+
+workflow-aggregator          # Pipeline
+git                          # Git
+github-branch-source         # GitHub Branch Source
+docker-workflow              # Docker Pipeline
+credentials-binding          # Credentials Binding
+pipeline-utility-steps       # Pipeline Utility Steps
+sonar                        # SonarQube Scanner
+blueocean                    # Blue Ocean
+github                       # GitHub Plugin
+slack                        # Slack Notification
+build-timeout                # Build Timeout
+timestamper                  # Timestamps in console
+ws-cleanup                   # Workspace Cleanup
+junit                        # JUnit test report
+htmlpublisher                # HTML Publisher (Trivy/tfsec reports)
+ant                          # Ant (suggested default)
+gradle                       # Gradle (suggested default)
+matrix-auth                  # Matrix Authorization Strategy
+pam-auth                     # PAM Authentication
+ldap                         # LDAP
+email-ext                    # Email Extension
+mailer                       # Mailer
+ssh-slaves                   # SSH Build Agents
+ssh-credentials              # SSH Credentials
+plain-credentials            # Plain Credentials
+trilead-api                  # Trilead API (SSH dep)
+cloudbees-folder             # Folders
+antisamy-markup-formatter    # Safe HTML
+authorize-project            # Authorize Project

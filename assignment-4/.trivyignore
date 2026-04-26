@@ -1,0 +1,14 @@
+# .trivyignore — CVEs intentionally ignored with justification
+#
+# Format: CVE-ID
+# Each entry must have a justification comment above it.
+
+# CVE-2023-45853 (zlib): Only exploitable via a crafted file processed by minigzip/minizip.
+# Our app never processes zlib-compressed files directly — Flask uses zlib only for
+# HTTP transfer encoding which is not exposed to untrusted input in this deployment.
+# CVE-2023-45853
+
+# CVE-2024-2236 (libgcrypt): Timing side-channel in RSA decryption.
+# Our app does not perform RSA decryption. libgcrypt is a transitive dependency
+# of system packages and is not directly used by application code.
+# CVE-2024-2236

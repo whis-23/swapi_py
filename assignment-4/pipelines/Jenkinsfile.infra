@@ -1,0 +1,161 @@
+pipeline {
+    agent { label 'linux-agent' }
+
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['plan', 'apply', 'destroy'],
+            description: 'Terraform action to perform'
+        )
+        booleanParam(
+            name: 'AUTO_APPROVE',
+            defaultValue: false,
+            description: 'Skip manual approval and apply/destroy immediately'
+        )
+    }
+
+    environment {
+        TF_DIR        = '22F_3722_22F_3708_Assignment3_Submission/environments/dev'
+        TF_PLAN_FILE  = 'tfplan'
+        AWS_REGION    = 'us-east-1'
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 90, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Action: ${params.ACTION} | Auto-approve: ${params.AUTO_APPROVE}"
+            }
+        }
+
+        stage('Fmt & Validate') {
+            steps {
+                dir(env.TF_DIR) {
+                    withCredentials([
+                        string(credentialsId: 'aws-access-key-id',  variable: 'AWS_ACCESS_KEY_ID'),
+                        string(credentialsId: 'aws-secret-key',     variable: 'AWS_SECRET_ACCESS_KEY')
+                    ]) {
+                        sh '''
+                            terraform init -input=false
+                            echo "=== terraform fmt check ==="
+                            terraform fmt -check -recursive
+                            echo "=== terraform validate ==="
+                            terraform validate
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Security Scan (tfsec)') {
+            steps {
+                sh """
+                    tfsec ${env.TF_DIR} \
+                        --minimum-severity HIGH \
+                        --format json \
+                        --out assignment-4/tfsec-report.json || true
+
+                    tfsec ${env.TF_DIR} \
+                        --minimum-severity HIGH \
+                        --format lovely \
+                        --out assignment-4/tfsec-report.txt
+
+                    # Fail if any HIGH findings exist
+                    HIGH_COUNT=\$(tfsec ${env.TF_DIR} --minimum-severity HIGH --format json 2>/dev/null | \
+                        python3 -c "import sys,json; d=json.load(sys.stdin); print(len([r for r in d.get('results',[]) if r.get('severity')=='HIGH']))" 2>/dev/null || echo 0)
+                    echo "HIGH findings: \$HIGH_COUNT"
+                    if [ "\$HIGH_COUNT" -gt 0 ]; then
+                        echo "tfsec found HIGH severity issues. Failing pipeline."
+                        exit 1
+                    fi
+                """
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'assignment-4/tfsec-report.*', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Plan') {
+            steps {
+                dir(env.TF_DIR) {
+                    withCredentials([
+                        string(credentialsId: 'aws-access-key-id',  variable: 'AWS_ACCESS_KEY_ID'),
+                        string(credentialsId: 'aws-secret-key',     variable: 'AWS_SECRET_ACCESS_KEY')
+                    ]) {
+                        sh """
+                            terraform plan \
+                                -input=false \
+                                -out=${env.WORKSPACE}/${env.TF_PLAN_FILE} \
+                                ${params.ACTION == 'destroy' ? '-destroy' : ''}
+                        """
+                    }
+                }
+                archiveArtifacts artifacts: env.TF_PLAN_FILE, fingerprint: true
+            }
+        }
+
+        stage('Manual Approval') {
+            when {
+                allOf {
+                    expression { params.ACTION in ['apply', 'destroy'] }
+                    expression { !params.AUTO_APPROVE }
+                }
+            }
+            steps {
+                timeout(time: 30, unit: 'MINUTES') {
+                    input(
+                        message: "Approve Terraform ${params.ACTION.toUpperCase()}?",
+                        ok: 'Approve',
+                        submitter: 'admin',
+                        parameters: [
+                            string(
+                                name: 'APPROVER_NOTE',
+                                defaultValue: '',
+                                description: 'Optional note from approver'
+                            )
+                        ]
+                    )
+                }
+            }
+        }
+
+        stage('Apply / Destroy') {
+            when {
+                expression { params.ACTION in ['apply', 'destroy'] }
+            }
+            steps {
+                dir(env.TF_DIR) {
+                    withCredentials([
+                        string(credentialsId: 'aws-access-key-id',  variable: 'AWS_ACCESS_KEY_ID'),
+                        string(credentialsId: 'aws-secret-key',     variable: 'AWS_SECRET_ACCESS_KEY')
+                    ]) {
+                        sh """
+                            terraform apply -input=false ${env.WORKSPACE}/${env.TF_PLAN_FILE}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: "${env.TF_PLAN_FILE}", allowEmptyArchive: true
+            cleanWs()
+        }
+        success {
+            echo "infra-pipeline completed successfully: ${params.ACTION}"
+        }
+        failure {
+            echo "infra-pipeline FAILED: ${params.ACTION}"
+        }
+    }
+}

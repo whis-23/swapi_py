@@ -1,0 +1,211 @@
+@Library('swapi-shared-lib') _
+
+pipeline {
+    agent { label 'linux-agent' }
+
+    environment {
+        APP_DIR        = 'assignment-4/app'
+        IMAGE_NAME     = 'swapi-app'
+        ECR_REGISTRY   = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
+        IMAGE_TAG_SHA  = "${env.GIT_COMMIT[0..6]}"
+        IMAGE_TAG_BRANCH = "${env.BRANCH_NAME}"
+        SONAR_PROJECT  = 'swapi-app'
+        SLACK_WEBHOOK  = credentials('slack-webhook-url')
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 60, unit: 'MINUTES')
+        timestamps()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "Building branch: ${env.BRANCH_NAME}, commit: ${env.GIT_COMMIT[0..6]}"
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir(APP_DIR) {
+                    sh '''
+                        python3 -m venv .venv
+                        . .venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
+
+        stage('Static Analysis') {
+            steps {
+                dir(APP_DIR) {
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                            . .venv/bin/activate
+                            pip install pytest-cov
+                            pytest tests/unit \
+                                --cov=. \
+                                --cov-report=xml:coverage.xml \
+                                --junitxml=unit-results.xml \
+                                -q || true
+                            sonar-scanner \
+                                -Dsonar.projectKey=${SONAR_PROJECT} \
+                                -Dsonar.projectName="SWAPI App" \
+                                -Dsonar.sources=. \
+                                -Dsonar.python.coverage.reportPaths=coverage.xml \
+                                -Dsonar.exclusions=tests/**,*.cfg
+                        '''
+                    }
+                }
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        dir(APP_DIR) {
+                            sh '''
+                                . .venv/bin/activate
+                                pytest tests/unit \
+                                    --junitxml=unit-results.xml \
+                                    --cov=. \
+                                    --cov-report=xml:unit-coverage.xml \
+                                    -v
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            junit 'assignment-4/app/unit-results.xml'
+                        }
+                    }
+                }
+                stage('Integration Tests') {
+                    steps {
+                        dir(APP_DIR) {
+                            sh '''
+                                . .venv/bin/activate
+                                pytest tests/integration \
+                                    --junitxml=integration-results.xml \
+                                    -v
+                            '''
+                        }
+                    }
+                    post {
+                        always {
+                            junit 'assignment-4/app/integration-results.xml'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                dir(APP_DIR) {
+                    sh '''
+                        . .venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt --target=package/
+                        cp app.py models.py package/
+                        cd package && zip -r ../swapi-app.zip . && cd ..
+                    '''
+                    archiveArtifacts artifacts: 'swapi-app.zip', fingerprint: true
+                }
+            }
+        }
+
+        stage('Container Build') {
+            steps {
+                sh """
+                    docker build \
+                        -t ${IMAGE_NAME}:${IMAGE_TAG_SHA} \
+                        -t ${IMAGE_NAME}:${IMAGE_TAG_BRANCH} \
+                        -f assignment-4/Dockerfile \
+                        assignment-4/
+                """
+            }
+        }
+
+        stage('Security Scan') {
+            steps {
+                sh """
+                    trivy image \
+                        --exit-code 1 \
+                        --severity HIGH,CRITICAL \
+                        --ignore-unfixed \
+                        --ignorefile assignment-4/.trivyignore \
+                        --format table \
+                        --output assignment-4/trivy-report.txt \
+                        ${IMAGE_NAME}:${IMAGE_TAG_SHA}
+                """
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'assignment-4/trivy-report.txt', allowEmptyArchive: true
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            when {
+                expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                sh """
+                    aws ecr get-login-password --region ${env.AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG_SHA} ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG_SHA}
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG_BRANCH} ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG_BRANCH}
+                    docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG_SHA}
+                    docker push ${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG_BRANCH}
+                """
+            }
+        }
+
+        stage('Deploy-Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                withCredentials([string(credentialsId: 'aws-account-id', variable: 'AWS_ACCOUNT_ID')]) {
+                    sh """
+                        chmod +x assignment-4/pipelines/blue-green-deploy.sh
+                        assignment-4/pipelines/blue-green-deploy.sh \
+                            "${ECR_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG_SHA}" \
+                            "${env.AWS_REGION}"
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'assignment-4/app/swapi-app.zip', allowEmptyArchive: true
+            cleanWs()
+        }
+        success {
+            notifySlack([
+                webhook : env.SLACK_WEBHOOK,
+                message : "BUILD SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER} on ${env.BRANCH_NAME}. View: ${env.BUILD_URL}",
+                color   : 'good'
+            ])
+        }
+        failure {
+            notifySlack([
+                webhook : env.SLACK_WEBHOOK,
+                message : "BUILD FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER} on ${env.BRANCH_NAME}. Stage: ${env.STAGE_NAME}. View: ${env.BUILD_URL}",
+                color   : 'danger'
+            ])
+        }
+    }
+}
