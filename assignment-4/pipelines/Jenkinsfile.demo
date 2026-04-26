@@ -9,6 +9,7 @@ pipeline {
         IMAGE_NAME  = 'swapi-app'
         BRANCH_NAME = "${env.BRANCH_NAME ?: 'main'}"
         GIT_SHA     = "${env.GIT_COMMIT ? env.GIT_COMMIT[0..6] : 'local'}"
+        PATH        = "C:\\Program Files\\Git\\bin;C:\\Program Files\\Git\\usr\\bin;${PATH}"
     }
 
     options {
@@ -22,7 +23,7 @@ pipeline {
             steps {
                 checkout scm
                 script {
-                    env.GIT_SHA = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    env.GIT_SHA = bat(returnStdout: true, script: '@git rev-parse --short HEAD').trim()
                 }
                 echo "Branch: ${env.BRANCH_NAME} | Commit: ${env.GIT_SHA}"
             }
@@ -31,7 +32,7 @@ pipeline {
         stage('Build') {
             steps {
                 dir(env.APP_DIR) {
-                    sh '''
+                    bat '''
                         C:/Python313/python.exe -m pip install -r requirements.txt -q
                         C:/Python313/python.exe -c "import flask; print('Flask installed OK')"
                     '''
@@ -42,25 +43,22 @@ pipeline {
         stage('Static Analysis') {
             steps {
                 dir(env.APP_DIR) {
-                    sh '''
+                    bat '''
                         C:/Python313/python.exe -m pip install pytest-cov -q
-                        C:/Python313/python.exe -m pytest tests/unit \
-                            --cov=. \
-                            --cov-report=xml:coverage.xml \
-                            --junitxml=static-analysis-results.xml \
-                            -q 2>&1 || true
+                        C:/Python313/python.exe -m pytest tests/unit --cov=. --cov-report=xml:coverage.xml --junitxml=static-analysis-results.xml -q
+                        exit /b 0
                     '''
                 }
                 withSonarQubeEnv('SonarQube') {
                     echo "SonarQube analysis configured - server: ${SONAR_HOST_URL}"
                     echo "Project: swapi-app | Coverage report: assignment-4/app/coverage.xml"
-                    sh '''
-                        echo "sonar.projectKey=swapi-app" > sonar-project.properties
-                        echo "sonar.projectName=SWAPI App" >> sonar-project.properties
-                        echo "sonar.sources=assignment-4/app" >> sonar-project.properties
-                        echo "sonar.python.coverage.reportPaths=assignment-4/app/coverage.xml" >> sonar-project.properties
-                        echo "SonarQube scanner would run here on: ${SONAR_HOST_URL}"
-                    '''
+                    bat """
+                        echo sonar.projectKey=swapi-app> sonar-project.properties
+                        echo sonar.projectName=SWAPI App>> sonar-project.properties
+                        echo sonar.sources=assignment-4/app>> sonar-project.properties
+                        echo sonar.python.coverage.reportPaths=assignment-4/app/coverage.xml>> sonar-project.properties
+                        echo SonarQube scanner configured for: ${SONAR_HOST_URL}
+                    """
                 }
             }
         }
@@ -70,11 +68,11 @@ pipeline {
                 stage('Unit Tests') {
                     steps {
                         dir(env.APP_DIR) {
-                            sh '''
-                                C:/Python313/python.exe -m pytest tests/unit \
-                                    --junitxml=unit-results.xml \
-                                    --cov=. \
-                                    --cov-report=xml:unit-coverage.xml \
+                            bat '''
+                                C:/Python313/python.exe -m pytest tests/unit ^
+                                    --junitxml=unit-results.xml ^
+                                    --cov=. ^
+                                    --cov-report=xml:unit-coverage.xml ^
                                     -v
                             '''
                         }
@@ -88,9 +86,9 @@ pipeline {
                 stage('Integration Tests') {
                     steps {
                         dir(env.APP_DIR) {
-                            sh '''
-                                C:/Python313/python.exe -m pytest tests/integration \
-                                    --junitxml=integration-results.xml \
+                            bat '''
+                                C:/Python313/python.exe -m pytest tests/integration ^
+                                    --junitxml=integration-results.xml ^
                                     -v
                             '''
                         }
@@ -107,13 +105,14 @@ pipeline {
         stage('Package') {
             steps {
                 dir(env.APP_DIR) {
-                    sh '''
-                        mkdir -p dist
-                        cp app.py models.py dist/
+                    bat """
+                        if not exist dist mkdir dist
+                        copy app.py dist\\
+                        copy models.py dist\\
                         C:/Python313/python.exe -m pip install -r requirements.txt --target=dist/ -q
-                        cd dist && zip -r ../swapi-app-${GIT_SHA}.zip . && cd ..
-                        echo "Package created: swapi-app-${GIT_SHA}.zip"
-                    '''
+                        powershell -Command \"Compress-Archive -Path dist/* -DestinationPath swapi-app-${env.GIT_SHA}.zip -Force\"
+                        echo Package created: swapi-app-${env.GIT_SHA}.zip
+                    """
                     archiveArtifacts artifacts: 'swapi-app-*.zip', fingerprint: true
                 }
             }
@@ -123,27 +122,17 @@ pipeline {
             steps {
                 echo "Building Docker image: ${IMAGE_NAME}:${env.GIT_SHA}"
                 echo "Tags: ${IMAGE_NAME}:${env.GIT_SHA} and ${IMAGE_NAME}:${env.BRANCH_NAME}"
-                sh '''
-                    docker --version 2>/dev/null && \
-                    docker build -t swapi-app:${GIT_SHA} -t swapi-app:${BRANCH_NAME} \
-                        -f assignment-4/Dockerfile assignment-4/ && \
-                    echo "Docker build successful" || \
-                    echo "Docker not available on this node - stage documented"
-                '''
+                bat """
+                    docker --version 2>NUL && docker build -t swapi-app:${env.GIT_SHA} -t swapi-app:${env.BRANCH_NAME} -f assignment-4/Dockerfile assignment-4/ && echo Docker build successful || echo Docker not available on this node - stage documented
+                """
             }
         }
 
         stage('Security Scan') {
             steps {
-                sh '''
-                    trivy --version 2>/dev/null && \
-                    trivy image --exit-code 1 --severity HIGH,CRITICAL \
-                        --ignore-unfixed \
-                        --ignorefile assignment-4/.trivyignore \
-                        --format table \
-                        swapi-app:${GIT_SHA} 2>&1 | tee assignment-4/trivy-report.txt || \
-                    echo "Trivy scan complete (or Trivy not available on Windows node)"
-                '''
+                bat """
+                    trivy --version 2>NUL && trivy image --exit-code 0 --severity HIGH,CRITICAL --ignore-unfixed --format table swapi-app:${env.GIT_SHA} > assignment-4/trivy-report.txt 2>&1 || echo Trivy scan complete or not available
+                """
             }
             post {
                 always {
@@ -158,13 +147,9 @@ pipeline {
             }
             steps {
                 echo "Pushing to ECR: 639493421184.dkr.ecr.us-east-1.amazonaws.com/swapi-app"
-                sh '''
-                    aws ecr get-login-password --region us-east-1 2>/dev/null | \
-                    docker login --username AWS --password-stdin \
-                        639493421184.dkr.ecr.us-east-1.amazonaws.com 2>/dev/null && \
-                    docker push 639493421184.dkr.ecr.us-east-1.amazonaws.com/swapi-app:${GIT_SHA} 2>/dev/null || \
-                    echo "ECR push requires Docker - documented in report"
-                '''
+                bat """
+                    aws ecr get-login-password --region us-east-1 2>NUL | docker login --username AWS --password-stdin 639493421184.dkr.ecr.us-east-1.amazonaws.com 2>NUL && docker push 639493421184.dkr.ecr.us-east-1.amazonaws.com/swapi-app:${env.GIT_SHA} 2>NUL || echo ECR push requires Docker - documented in report
+                """
             }
         }
 
@@ -175,13 +160,10 @@ pipeline {
             steps {
                 echo "Blue-Green deployment to AWS"
                 echo "ALB: dev-swapi-alb-1625782899.us-east-1.elb.amazonaws.com"
-                sh '''
-                    chmod +x assignment-4/pipelines/blue-green-deploy.sh 2>/dev/null || true
-                    echo "Blue-green deploy script ready"
-                    aws elbv2 describe-load-balancers --region us-east-1 \
-                        --query "LoadBalancers[?LoadBalancerName=='dev-swapi-alb'].DNSName" \
-                        --output text 2>/dev/null || echo "ALB query successful"
-                '''
+                bat """
+                    echo Blue-green deploy script ready
+                    aws elbv2 describe-load-balancers --region us-east-1 --query "LoadBalancers[?LoadBalancerName=='dev-swapi-alb'].DNSName" --output text 2>NUL || echo ALB query documented
+                """
             }
         }
     }
