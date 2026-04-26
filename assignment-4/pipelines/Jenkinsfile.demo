@@ -9,7 +9,6 @@ pipeline {
         IMAGE_NAME  = 'swapi-app'
         BRANCH_NAME = "${env.BRANCH_NAME ?: 'main'}"
         GIT_SHA     = "${env.GIT_COMMIT ? env.GIT_COMMIT[0..6] : 'local'}"
-        PATH        = "C:\\Program Files\\Git\\bin;C:\\Program Files\\Git\\usr\\bin;${PATH}"
     }
 
     options {
@@ -110,8 +109,7 @@ pipeline {
                         copy app.py dist\\
                         copy models.py dist\\
                         C:/Python313/python.exe -m pip install -r requirements.txt --target=dist/ -q
-                        powershell -Command \"Compress-Archive -Path dist/* -DestinationPath swapi-app-${env.GIT_SHA}.zip -Force\"
-                        echo Package created: swapi-app-${env.GIT_SHA}.zip
+                        C:/Python313/python.exe -c "import shutil; shutil.make_archive('swapi-app-${env.GIT_SHA}', 'zip', 'dist'); print('Package created: swapi-app-${env.GIT_SHA}.zip')"
                     """
                     archiveArtifacts artifacts: 'swapi-app-*.zip', fingerprint: true
                 }
