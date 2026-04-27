@@ -23,7 +23,7 @@ class TestHealthEndpoint:
     def test_health_returns_up_status(self, client):
         response = client.get("/health")
         data = json.loads(response.data)
-        assert data["status"] == "UP"
+        assert data["status"] == "DOWN"  # intentional failure: testing CI red-build detection
 
     def test_health_returns_service_name(self, client):
         response = client.get("/health")
