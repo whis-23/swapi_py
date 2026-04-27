@@ -1,4 +1,26 @@
 ######################
+# Assignment 4 — DevOps secrets and build artifacts
+######################
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+.terraform.lock.hcl
+# Python venv / coverage
+**/.venv/
+**/coverage.xml
+**/htmlcov/
+**/.coverage
+# Trivy / tfsec reports (generated; not committed)
+**/trivy-report.*
+**/tfsec-report.*
+# Docker build artifacts
+**/package/
+**/swapi-app.zip
+
+######################
 # Project Specific
 ######################
 /src/main/webapp/content/css/main.css
